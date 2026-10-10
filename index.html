@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مساعد الطلاب</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    background: #eef2f7;
+    color: #1f2937;
+    display: flex;
+    justify-content: center;
+  }
+  .app {
+    width: 100%;
+    max-width: 640px;
+    min-height: 100vh;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: #2563eb;
+    color: #fff;
+    padding: 16px 20px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  #chat {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    line-height: 1.8;
+    font-size: 16px;
+    white-space: pre-wrap;
+  }
+  .bot  { background: #e5e7eb; align-self: flex-start; border-top-right-radius: 4px; }
+  .user { background: #2563eb; color: #fff; align-self: flex-end; border-top-left-radius: 4px; }
+  #questions {
+    border-top: 1px solid #e5e7eb;
+    padding: 12px 16px 16px;
+    background: #f9fafb;
+    max-height: 45vh;
+    overflow-y: auto;
+  }
+  #questions h2 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    color: #6b7280;
+    font-weight: normal;
+  }
+  .q-btn {
+    display: block;
+    width: 100%;
+    text-align: right;
+    margin-bottom: 8px;
+    padding: 12px 14px;
+    font-size: 16px;
+    font-family: inherit;
+    background: #fff;
+    color: #1d4ed8;
+    border: 1.5px solid #bfdbfe;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .q-btn:hover, .q-btn:active { background: #dbeafe; }
+  #reset {
+    margin-top: 4px;
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header id="title"></header>
+  <div id="chat"></div>
+  <div id="questions">
+    <h2>اختاري سؤالك:</h2>
+    <div id="buttons"></div>
+    <button id="reset">مسح المحادثة</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   الجزء ده الوحيد اللي بتعدلي فيه
+   ============================================================ */
+
+// عنوان الصفحة
+const TITLE = "شات بوت المحاكاة التفاعلية";
+
+// رسالة الترحيب
+const WELCOME = "أهلًا بيك! اختار السؤال اللي عايز تعرف إجابته من القائمة تحت 👇";
+
+// الأسئلة والأجوبة
+// لإضافة سؤال جديد: انسخي سطر كامل (من { لحد },) وحطيه تحت آخر سطر وغيري الكلام.
+// خلي بالك من العلامات " " والفاصلة , في آخر كل سطر.
+const FAQ = [
+  { q: "اذكر مفهوم المحاكاة التفاعلية",
+    a: "كل المواد التعليمية التي يمكن لمسها وتناولها وتمثل الواقع بابعاده الثلاثة ( الطول والعرض والعمق)،إما كما هو او بإعادة تشكيله او ترتيبه او اختصاره ليصبح أكثر مناسبة لعملية التعليم والتعلم." },
+
+  { q: "مميزات المحاكاة التفاعلية",
+    a: "ويقصد بها الأشياء الحقيقية مأخوذة من بيئاتها الطبيعية كما هى دون تغير فيها أو تعديل." },
+
+  { q: "عناصر المحاكاة التفاعلية",
+    a: "الممارسة العملية والتعامل مع الأشياء الحقيقية التى تدرس بذاتها، والأفضل لو كانت دراسة هذه الأشياء فى أماكنها أو بيئاتها الطبيعية..\nيصعب على المعلم أحياناً أخذ تلميذه إلى حيث توجد هذه الأشياء فى بيئتها الطبيعية.." },
+
+  { q: "نماذج المحاكاة التفاعلية",
+    a: "قد يكون الشىء ذاته كثير التفاصيل مما يشتت الدارس بينما يركز النموذج على التفاصيل المراد تعلمها." },
+
+  { q: "اهمية المحاكاة",
+    a: "يمكن للنموذج أن يجسد أشياء ليس لها واقع في الوقت الحالي كالديناصورات والحيوانات المنقرضة وبعض المباني الأثرية غير الموجودة حاليًا كفنار الإسكندرية.(بعد زماني ومكاني).\nتكبير الواقع أو تصغيره." },
+ { q: "نهاية",
+    a: "https://www.youtube.com/watch?v=xGvxNc2yhRw&t=2s" }
+];
+
+/* ============================================================
+   من هنا لتحت ما تغيريش حاجة
+   ============================================================ */
+
+const chat = document.getElementById("chat");
+const buttons = document.getElementById("buttons");
+document.getElementById("title").textContent = TITLE;
+document.title = TITLE;
+
+function addMessage(text, who) {
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showWelcome() {
+  chat.innerHTML = "";
+  addMessage(WELCOME, "bot");
+}
+
+FAQ.forEach(function (item) {
+  const b = document.createElement("button");
+  b.className = "q-btn";
+  b.textContent = item.q;
+  b.onclick = function () {
+    addMessage(item.q, "user");
+    setTimeout(function () { addMessage(item.a, "bot"); }, 300);
+  };
+  buttons.appendChild(b);
+});
+
+document.getElementById("reset").onclick = showWelcome;
+showWelcome();
+</script>
+
+</body>
+</html>
